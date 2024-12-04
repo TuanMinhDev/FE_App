@@ -13,6 +13,7 @@ import AddProduct from "./src/pages/Admin/AddProduct";
 import ProductAdmin from "./src/pages/Admin/ProductAdmin";
 import User from "./src/pages/giaodien/User";
 import Bill from "./src/pages/giaodien/Bill";
+import Product from "./src/pages/giaodien/Product";
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,7 @@ const App = () => {
         <Stack.Screen name="ProductAdmin" component={ProductAdmin} />
         <Stack.Screen name="User" component={User} />
         <Stack.Screen name="Bill" component={Bill} />
+        <Stack.Screen name="Product" component={Product}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

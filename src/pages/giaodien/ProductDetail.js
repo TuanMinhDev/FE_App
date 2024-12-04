@@ -4,123 +4,105 @@ import {
   Text,
   Image,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Alert,
 } from "react-native";
-import axios from "axios";
-import { useSelector } from "react-redux";
 
-const ProductDetail = ({ route }) => {
+import { useSelector, useDispatch } from "react-redux";
+import { getProductById, postBill, postBill2, postCart } from "../../redux/apiRequest";
+import Icon from "react-native-vector-icons/AntDesign";
+
+const ProductDetail = ({ route, navigation }) => {
   const { id } = route.params;
 
-  const [product, setProduct] = useState(null);
   const [info, setInfo] = useState({
+    productId: id,
     quantity: 1,
     size: "",
   });
 
   const currentUser = useSelector((state) => state.login.login.currentUser);
+  const product = useSelector((state) => state.products.singleProduct.product);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    const handleProductDetail = async () => {
-      try {
-        const res = await axios.get(`http://10.0.2.2:4000/api/product/${id}`);
-        setProduct(res.data);
-      } catch (error) {
-        console.log(error);
-        Alert.alert("Error", "Failed to fetch product details");
-      }
-    };
-
-    handleProductDetail();
+    getProductById(dispatch, id);
   }, [id]);
+
+  const [pic, setPic] = useState(null);
+
+  useEffect(() => {
+    if (product) {
+      setPic(product.linkImg1);
+    }
+  }, [product]);
 
   if (!product) {
     return <Text>Loading...</Text>;
   }
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!info.size) {
       Alert.alert("Error", "Please select a size before adding to cart");
       return;
     }
 
-    try {
-      await axios.post(
-        "http://10.0.2.2:4000/api/cart",
-        {
-          productId: id,
-          quantity: info.quantity,
-          size: info.size,
-        },
-        {
-          headers: { token: `Bearer ${currentUser.accessToken}` },
-        }
-      );
-      Alert.alert("Success", "Product added to cart");
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Error", "Failed to add product to cart");
-    }
+    postCart(dispatch, info, currentUser.accessToken)
+      .then(() => {
+        Alert.alert("Sản phẩm đã thêm vào giỏ hàng");
+      })
+      .catch(() => {
+        Alert.alert("Lỗi");
+      });
   };
 
+  const handlePic = (anh) => {
+    setPic(anh);
+  };
+  const totalPrice = info.quantity * product.price; 
+  const handleBuyNow = () =>{
+    postBill2(dispatch,id, info.size, info.quantity,totalPrice, currentUser.accessToken, navigation);
+  }
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.lui} onPress={() => navigation.goBack()}>
+        <Icon name="arrowleft" size={30} color="#000" />
+      </TouchableOpacity>
+
       <View style={styles.productImageContainer}>
         <Image
-          source={{ uri: product.linkImg1 }}
+          source={{ uri: pic }}
           style={styles.productImage}
           resizeMode="contain"
         />
       </View>
+      <View style={styles.boxPic}>
+        <TouchableOpacity
+          style={styles.boxIdPic}
+          onPress={() => handlePic(product.linkImg1)}
+        >
+          <Image source={{ uri: product.linkImg1 }} style={styles.pic} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.boxIdPic}
+          onPress={() => handlePic(product.linkImg2)}
+        >
+          <Image source={{ uri: product.linkImg2 }} style={styles.pic} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.boxIdPic}
+          onPress={() => handlePic(product.linkImg3)}
+        >
+          <Image source={{ uri: product.linkImg3 }} style={styles.pic} />
+        </TouchableOpacity>
+      </View>
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{product.nameProduct}</Text>
-        <Text style={styles.productPrice}>${product.price}</Text>
-        <Text style={styles.productDescription}>{product.description}</Text>
+        <Text style={styles.productPrice}>Giá: {product.price} VND</Text>
       </View>
-
-      {product.linkImg2 && (
-        <View style={styles.productImageContainer}>
-          <Image
-            source={{ uri: product.linkImg2 }}
-            style={styles.productImage}
-            resizeMode="contain"
-          />
-        </View>
-      )}
-      {product.linkImg3 && (
-        <View style={styles.productImageContainer}>
-          <Image
-            source={{ uri: product.linkImg3 }}
-            style={styles.productImage}
-            resizeMode="contain"
-          />
-        </View>
-      )}
-
-      <View style={styles.sizeContainer}>
-        {["S", "M", "L", "XL"].map((size) => (
-          <TouchableOpacity
-            key={size}
-            style={[
-              styles.sizeButton,
-              info.size === size && styles.selectedSizeButton,
-            ]}
-            onPress={() => setInfo((prev) => ({ ...prev, size }))}
-          >
-            <Text
-              style={[
-                styles.sizeButtonText,
-                info.size === size && styles.selectedSizeButtonText,
-              ]}
-            >
-              {size}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       <View style={styles.quantityContainer}>
         <TouchableOpacity
           style={styles.quantityButton}
@@ -146,9 +128,30 @@ const ProductDetail = ({ route }) => {
           <Text style={styles.quantityButtonText}>+</Text>
         </TouchableOpacity>
       </View>
+      <View style={styles.sizeContainer}>
+        {["S", "M", "L", "XL"].map((size) => (
+          <TouchableOpacity
+            key={size}
+            style={[
+              styles.sizeButton,
+              info.size === size && styles.selectedSizeButton,
+            ]}
+            onPress={() => setInfo((prev) => ({ ...prev, size }))}
+          >
+            <Text
+              style={[
+                styles.sizeButtonText,
+                info.size === size && styles.selectedSizeButtonText,
+              ]}
+            >
+              {size}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <View style={styles.fixedActions}>
-        <TouchableOpacity style={styles.buyNowButton}>
+        <TouchableOpacity style={styles.buyNowButton} onPress={()=> handleBuyNow()}>
           <Text style={styles.buttonText}>Buy Now</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -158,7 +161,7 @@ const ProductDetail = ({ route }) => {
           <Text style={styles.buttonText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -167,6 +170,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 15,
+    paddingTop: 50,
   },
   productImageContainer: {
     width: "100%",
@@ -189,14 +193,9 @@ const styles = StyleSheet.create({
   },
   productPrice: {
     fontSize: 20,
-    color: "#007BFF",
+    color: "black",
     fontWeight: "bold",
     marginTop: 8,
-  },
-  productDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 12,
   },
   sizeContainer: {
     flexDirection: "row",
@@ -274,6 +273,26 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  boxPic: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 10,
+    width: "100%",
+  },
+  pic: {
+    width: "100%",
+    height: 150,
+  },
+  boxIdPic: {
+    width: "30%",
+    marginBottom: 5,
+    marginLeft: 5,
+    borderColor: "#ccc",
+    borderWidth: 1,
+  },
+  lui: {
+    marginBottom: 10,
   },
 });
 

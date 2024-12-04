@@ -1,76 +1,39 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Modal } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { putUser } from "../../redux/apiRequest";
 
 const User = () => {
-  const users = useSelector((state) => state.login?.login?.currentUser);
-  const [people, setPeople] = useState([]); // Danh sách người dùng
+  const currentUser = useSelector((state) => state.login?.login?.currentUser);
+
   const [editData, setEditData] = useState({}); // Dữ liệu chỉnh sửa
   const [modalVisible, setModalVisible] = useState(false); // Trạng thái của Modal
-  const [selectedUserId, setSelectedUserId] = useState(null); // ID người dùng đang chỉnh sửa
+  const dispatch = useDispatch();
 
-  const token = users?.accessToken;
-
-  // Lấy danh sách người dùng
-  useEffect(() => {
-    const handleUser = async () => {
-      try {
-        const res = await axios.get(`http://10.0.2.2:4000/api/user`, {
-          headers: { token: `Bearer ${token}` },
-        });
-        setPeople(res.data);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    handleUser();
-  }, [token]);
-
-  // Mở Modal và thiết lập dữ liệu người dùng cần chỉnh sửa
-  const handleEdit = (user) => {
-    setEditData(user);
-    setSelectedUserId(user._id);
-    setModalVisible(true);
-  };
-
-  // Cập nhật thông tin người dùng
+  
   const handleUpdateUser = async () => {
-    try {
-      const res = await axios.put(
-        `http://10.0.2.2:4000/api/user/${selectedUserId}`,
-        editData,
-        {
-          headers: { token: `Bearer ${token}` },
-        }
-      );
-      alert("Cập nhật thông tin thành công!");
-
-      // Cập nhật danh sách hiển thị
-      setPeople((prev) =>
-        prev.map((user) =>
-          user._id === selectedUserId ? { ...user, ...res.data } : user
-        )
-      );
-      setModalVisible(false); // Đóng Modal
-    } catch (error) {
-      console.error("Error updating user data:", error);
+    if (editData) {
+      putUser(dispatch, editData, currentUser.accessToken);
+      setModalVisible(false); 
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Danh sách người dùng</Text>
-      {people.map((item) => (
-        <View key={item._id} style={styles.userContainer}>
-          <Text style={styles.userName}>{item.name}</Text>
-          <Text>Email: {item.email}</Text>
-          <Text>Phone: {item.phone}</Text>
-          <Text>Address: {item.address}</Text>
-          <Button title="Sửa" onPress={() => handleEdit(item)} />
-        </View>
-      ))}
+      <Text style={styles.title}>Thông tin người dùng</Text>
+      <View style={styles.userContainer}>
+        <Text style={styles.userName}>{currentUser.user.name}</Text>
+        <Text style={styles.userDetail}>{currentUser.user.email}</Text>
+        <Text style={styles.userDetail}>{currentUser.user.phoneNumber}</Text>
+        <Text style={styles.userDetail}>{currentUser.user.address}</Text>
+      </View>
+
+      
+      <Button
+        title="Chỉnh sửa thông tin"
+        onPress={() => setModalVisible(true)}
+      />
 
       {/* Modal chỉnh sửa */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
@@ -78,27 +41,26 @@ const User = () => {
           <Text style={styles.modalTitle}>Chỉnh sửa thông tin</Text>
           <TextInput
             style={styles.input}
-            value={editData.name || ""}
+            value={editData.name || currentUser.user.name}
             onChangeText={(text) => setEditData({ ...editData, name: text })}
-            placeholder="Tên"
+            placeholder="Tên người dùng"
           />
           <TextInput
             style={styles.input}
-            value={editData.email || ""}
+            value={editData.email || currentUser.user.email}
             onChangeText={(text) => setEditData({ ...editData, email: text })}
             placeholder="Email"
-            keyboardType="email-address"
           />
           <TextInput
             style={styles.input}
-            value={editData.phone || ""}
+            value={editData.phone || currentUser.user.phoneNumber}
             onChangeText={(text) => setEditData({ ...editData, phone: text })}
             placeholder="Số điện thoại"
             keyboardType="phone-pad"
           />
           <TextInput
             style={styles.input}
-            value={editData.address || ""}
+            value={editData.address || currentUser.user.address}
             onChangeText={(text) => setEditData({ ...editData, address: text })}
             placeholder="Địa chỉ"
           />
@@ -121,10 +83,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   title: {
-    fontSize: 20,
+    fontSize: 24, // Increased font size
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+    color: "#333", // Darker color for better readability
   },
   userContainer: {
     borderWidth: 1,
@@ -136,16 +99,23 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 18, // Increased font size for user name
+    color: "#333", // Darker color for text
+  },
+  userDetail: {
+    fontSize: 16, // Slightly larger than default text size
+    color: "#666", // Lighter color for user details
+    marginVertical: 5, // Added vertical margin for spacing
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 20,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22, // Increased modal title size
     fontWeight: "bold",
     marginBottom: 20,
     color: "#fff",

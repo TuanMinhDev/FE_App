@@ -1,58 +1,66 @@
-import React, { useEffect, useState } from "react";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   TextInput,
-  Image,
   FlatList,
+  StyleSheet,
+  Image,
   ScrollView,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { getAllProduct } from "../../redux/apiRequest";
 
-const TrangChu = ({ navigation }) => {
-  const images = [
-    "https://product.hstatic.net/200000525319/product/milk_box__10__0e853655bac04bfdb6058d79a96f6ddd_large.jpg",
-    "https://product.hstatic.net/200000525319/product/lazy_boss__9__077559e85e2342b2b4b5d2f77ff4aadc_large.jpg",
-    "https://product.hstatic.net/200000525319/product/bag__3__f884f3895330481fa66440381d3048d1_large.jpg",
-  ];
-
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+const Product = ({ navigation }) => {
   const [searchText, setSearchText] = useState("");
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [images.length]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const dispatch = useDispatch();
-  const data = useSelector((state) => state.products.products.listProducts);
+  const listProducts = useSelector(
+    (state) => state.products.products.listProducts
+  );
 
   useEffect(() => {
     getAllProduct(dispatch);
-  });
+  }, [dispatch]);
+
+  useEffect(() => {
+    const filterProducts = () => {
+      let products = listProducts;
+      if (selectedCategory) {
+        products = products.filter(
+          (product) => product.category === selectedCategory
+        );
+      }
+      if (searchText) {
+        products = products.filter((product) =>
+          product.nameProduct.toLowerCase().includes(searchText.toLowerCase())
+        );
+      }
+
+      setFilteredProducts(products);
+    };
+
+    filterProducts();
+  }, [searchText, selectedCategory, listProducts]);
+
+  const handleCategory = (category) => {
+    setSelectedCategory(category);
+  };
 
   const renderProductItem = ({ item }) => (
     <View style={styles.productItem}>
-      <TouchableOpacity
-        onPress={() => navigation.navigate("ProductDetail", { id: item._id })}
-      >
-        <Image source={{ uri: item.linkImg1 }} style={styles.productImage} />
-        <Text style={styles.productName}>{item.nameProduct}</Text>
-        <Text style={styles.productPrice}>{item.price} VNĐ</Text>
-      </TouchableOpacity>
+      <Image source={{ uri: item.linkImg1 }} style={styles.productImage} />
+      <Text style={styles.productName}>{item.nameProduct}</Text>
+      <Text style={styles.productPrice}>{item.price} VND</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.boxSearch}>
           <TouchableOpacity onPress={() => navigation.navigate("Search")}>
@@ -74,29 +82,53 @@ const TrangChu = ({ navigation }) => {
           <Icon name="shopping-cart" size={30} color="#007BFF" />
         </TouchableOpacity>
       </View>
-
+      <View style={styles.categoryContainer}>
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            selectedCategory === null && styles.selectedCategory,
+          ]}
+          onPress={() => handleCategory(null)}
+        >
+          <Text style={styles.categoryText}>Tất cả</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            selectedCategory === "Quần" && styles.selectedCategory,
+          ]}
+          onPress={() => handleCategory("Quần")}
+        >
+          <Text style={styles.categoryText}>Quần</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            selectedCategory === "Áo" && styles.selectedCategory,
+          ]}
+          onPress={() => handleCategory("Áo")}
+        >
+          <Text style={styles.categoryText}>Áo</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            selectedCategory === "Mũ" && styles.selectedCategory,
+          ]}
+          onPress={() => handleCategory("Mũ")}
+        >
+          <Text style={styles.categoryText}>Mũ</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView>
-        <View style={styles.boxVoucherContainer}>
-          <View style={styles.boxVoucher}>
-            <Image
-              source={{ uri: images[currentImageIndex] }}
-              style={styles.voucherImage}
-            />
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Sản phẩm mới</Text>
-
-        {/* Product List */}
         <FlatList
-          data={data}
-          keyExtractor={(item) => item._id}
+          data={filteredProducts}
           renderItem={renderProductItem}
+          keyExtractor={(item) => item._id}
           numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.productList}
           ListEmptyComponent={
-            <Text style={styles.noProducts}>Không có sản phẩm nào.</Text>
+            <Text style={styles.noProducts}>Không có sản phẩm nào</Text>
           }
         />
       </ScrollView>
@@ -168,42 +200,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  boxVoucherContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 10,
+  categoryContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 10,
+    backgroundColor: "#f1f1f1",
   },
-  boxVoucher: {
-    width: "90%",
-    alignItems: "center",
-    marginBottom: 20,
+  categoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    borderRadius: 20,
     borderWidth: 1,
+    borderColor: "#ddd",
   },
-  voucherImage: {
-    width: "100%",
-    height: 160,
-    resizeMode: "contain",
-    borderRadius: 10,
+  selectedCategory: {
+    backgroundColor: "#007BFF",
+    borderColor: "#007BFF",
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+  categoryText: {
     color: "#333",
-    paddingHorizontal: 15,
-    marginVertical: 10,
+    fontWeight: "bold",
   },
   productList: {
     paddingHorizontal: 10,
-  },
-  columnWrapper: {
-    justifyContent: "space-between",
   },
   productItem: {
     width: "48%",
@@ -216,6 +236,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     position: "relative",
+    marginRight: 10,
+    marginTop: 10,
   },
   productImage: {
     width: "100%",
@@ -271,4 +293,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TrangChu;
+export default Product;

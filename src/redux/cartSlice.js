@@ -11,20 +11,73 @@ const cartSlice = createSlice({
   },
   reducers: {
     getCartStart: (state) => {
-      state.products.isFetching = true;
+      state.carts.isFetching = true;
     },
-    getProductSuccess: (state, action) => {
-      state.products.isFetching = false;
-      state.products.listProducts = action.payload;
+    getCartSuccess: (state, action) => {
+      state.carts.isFetching = false;
+      state.carts.listCarts = action.payload;
     },
-    getProductFailure: (state) => {
-      state.products.isFetching = false;
-      state.products.error = true;
+    getCartFailure: (state) => {
+      state.carts.isFetching = false;
+      state.carts.error = true;
+    },
+
+    postCartStart: (state) => {
+      state.carts.isFetching = true;
+    },
+    postCartSuccess: (state, action) => {
+      state.carts.isFetching = false;
+      state.carts.listCarts.push(action.payload);
+    },
+    postCartFailure: (state) => {
+      state.carts.isFetching = false;
+      state.carts.error = true;
+    },
+
+    // PUT: Cập nhật giỏ hàng
+    putCartStart: (state) => {
+      state.carts.isFetching = true;
+    },
+    putCartSuccess: (state, action) => {
+      state.carts.isFetching = false;
+      const index = state.carts.listCarts.findIndex((item) => item._id === action.payload._id);
+      if (index !== -1) {
+        state.carts.listCarts[index] = action.payload; // Cập nhật sản phẩm
+      }
+    },
+    putCartFailure: (state) => {
+      state.carts.isFetching = false;
+      state.carts.error = true;
+    },
+
+    // DELETE: Xóa sản phẩm khỏi giỏ hàng
+    deleteCartStart: (state) => {
+      state.carts.isFetching = true;
+    },
+    deleteCartSuccess: (state, action) => {
+      state.carts.isFetching = false;
+      state.carts.listCarts = state.carts.listCarts.filter((item) => item._id !== action.payload); // Xóa sản phẩm theo _id
+    },
+    deleteCartFailure: (state) => {
+      state.carts.isFetching = false;
+      state.carts.error = true;
     },
   },
 });
 
-export const { getProductStart, getProductSuccess, getProductFailure } =
-  productSlice.actions;
+export const {
+  getCartStart,
+  getCartSuccess,
+  getCartFailure,
+  postCartStart,
+  postCartSuccess,
+  postCartFailure,
+  putCartStart,
+  putCartSuccess,
+  putCartFailure,
+  deleteCartStart,
+  deleteCartSuccess,
+  deleteCartFailure,
+} = cartSlice.actions;
 
-export default productSlice.reducer;
+export default cartSlice.reducer;

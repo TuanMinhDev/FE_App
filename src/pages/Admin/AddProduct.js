@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import axios from "axios";
+import { addProduct } from "../../redux/apiRequest";
+import { useDispatch } from "react-redux";
 
 
 
@@ -12,16 +14,9 @@ const AddProduct = ({navigation}) => {
     linkImg2: "",
     linkImg3: "",
   });
-
-  const handleSubmit = async () => {
-    try {
-      const res = await axios.post("http://10.0.2.2:4000/api/product/create", info);
-      console.log(res);
-      Alert.alert("Thêm sản phẩm thành công!");
-      navigation.navigate("ProductAdmin");
-    } catch (error) {
-      Alert.alert("Thêm sản phẩm thất bại!");
-    }
+  const dispatch = useDispatch();
+const currentUser = useSelector((state) => state.login?.login?.currentUser);  const handleSubmit = async () => {
+    addProduct(dispatch,info, )
   };
 
   return (

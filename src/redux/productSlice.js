@@ -8,9 +8,14 @@ const productSlice = createSlice({
       isFetching: false,
       error: false,
     },
+    singleProduct: {
+      product: null,
+      isFetching: false,
+      error: false,
+    },
   },
   reducers: {
-    // Lấy sản phẩm
+    // Get All Products
     getProductStart: (state) => {
       state.products.isFetching = true;
     },
@@ -23,14 +28,40 @@ const productSlice = createSlice({
       state.products.error = true;
     },
 
-    // Xóa sản phẩm
+    // Get Product by ID
+    getProductByIdStart: (state) => {
+      state.singleProduct.isFetching = true;
+    },
+    getProductByIdSuccess: (state, action) => {
+      state.singleProduct.isFetching = false;
+      state.singleProduct.product = action.payload;
+    },
+    getProductByIdFailure: (state) => {
+      state.singleProduct.isFetching = false;
+      state.singleProduct.error = true;
+    },
+
+    // Post Product
+    postProductStart: (state) => {
+      state.products.isFetching = true;
+    },
+    postProductSuccess: (state, action) => {
+      state.products.isFetching = false;
+      state.products.listProducts.push(action.payload);
+    },
+    postProductFailure: (state) => {
+      state.products.isFetching = false;
+      state.products.error = true;
+    },
+
+    // Delete Product
     deleteProductStart: (state) => {
       state.products.isFetching = true;
     },
     deleteProductSuccess: (state, action) => {
       state.products.isFetching = false;
       state.products.listProducts = state.products.listProducts.filter(
-        (product) => product.id !== action.payload // Xóa sản phẩm dựa trên ID
+        (product) => product.id !== action.payload
       );
     },
     deleteProductFailure: (state) => {
@@ -38,30 +69,20 @@ const productSlice = createSlice({
       state.products.error = true;
     },
 
-    // Sửa sản phẩm
-    updateProductStart: (state) => {
+    // Update Product (PUT)
+    putProductStart: (state) => {
       state.products.isFetching = true;
     },
-    updateProductSuccess: (state, action) => {
+    putProductSuccess: (state, action) => {
       state.products.isFetching = false;
-      state.products.listProducts = state.products.listProducts.map((product) =>
-        product.id === action.payload.id ? action.payload : product
+      const index = state.products.listProducts.findIndex(
+        (product) => product.id === action.payload.id
       );
+      if (index >= 0) {
+        state.products.listProducts[index] = action.payload;
+      }
     },
-    updateProductFailure: (state) => {
-      state.products.isFetching = false;
-      state.products.error = true;
-    },
-
-    // Thêm sản phẩm
-    addProductStart: (state) => {
-      state.products.isFetching = true;
-    },
-    addProductSuccess: (state, action) => {
-      state.products.isFetching = false;
-      state.products.listProducts.push(action.payload); 
-    },
-    addProductFailure: (state) => {
+    putProductFailure: (state) => {
       state.products.isFetching = false;
       state.products.error = true;
     },
@@ -72,15 +93,18 @@ export const {
   getProductStart,
   getProductSuccess,
   getProductFailure,
+  getProductByIdStart,
+  getProductByIdSuccess,
+  getProductByIdFailure,
+  postProductStart,
+  postProductSuccess,
+  postProductFailure,
   deleteProductStart,
   deleteProductSuccess,
   deleteProductFailure,
-  updateProductStart,
-  updateProductSuccess,
-  updateProductFailure,
-  addProductStart,
-  addProductSuccess,
-  addProductFailure,
+  putProductStart,
+  putProductSuccess,
+  putProductFailure,
 } = productSlice.actions;
 
 export default productSlice.reducer;
